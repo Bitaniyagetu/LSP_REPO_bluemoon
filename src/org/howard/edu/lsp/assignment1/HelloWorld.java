@@ -1,5 +1,5 @@
 /**
- * Name: Bitaniya   // or a nickname; comment is fine
+ * Name: Bitaniya  
  */
 package org.howard.edu.lsp.assignment1;
 
