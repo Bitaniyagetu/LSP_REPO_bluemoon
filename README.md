@@ -138,10 +138,3 @@ Baeldung – Java CSV
 https://www.baeldung.com/java-csv
 
 Used to review different ways to split CSV lines. Adapted simple string split approach since no quoted fields were required.
-
-
----
-
-✅ This README is fully polished, copy–paste ready, and covers **all rubric requirements**.  
-
-Do you also want me to draft a **short `ai_transcript.txt` file** so you can drop it in the repo alongside the README (in case your professor prefers it separated)?
