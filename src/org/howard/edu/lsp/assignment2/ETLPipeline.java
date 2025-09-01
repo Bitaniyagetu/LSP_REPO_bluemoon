@@ -10,146 +10,165 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 /**
- * Name: <Your Firstname Lastname>
- * Assignment 2 - CSV ETL Pipeline (Extract -> Transform -> Load)
- * 
- * Reads data/products.csv (relative path), transforms rows per spec, and writes
- * data/transformed_products.csv with a header. Prints a run summary.
+ * Author: Bitaniya Getu
+ * Assignment 2 – CSV ETL Pipeline (Extract → Transform → Load)
+ *
+ * This program reads product data from {@code data/products.csv}, applies a series
+ * of transformations to the data (uppercasing product names, applying discounts,
+ * recategorization, and price range calculation), and writes the transformed data
+ * to {@code data/transformed_products.csv}.
+ *
+ * It demonstrates:
+ * <ul>
+ *   <li>File I/O using relative paths</li>
+ *   <li>CSV parsing and data transformations</li>
+ *   <li>Separation of concerns (extract, transform, load methods)</li>
+ *   <li>Error handling for missing or empty input files</li>
+ * </ul>
  */
 public class ETLPipeline {
+
+    /**
+     * Entry point for the program.
+     * Orchestrates the Extract → Transform → Load process.
+     *
+     * @param args not used in this assignment
+     */
     public static void main(String[] args) {
         new ETLPipeline().run();
     }
 
+    /**
+     * Runs the ETL pipeline: extract, transform, load.
+     * Also prints a run summary to the console.
+     */
     public void run() {
-        Path input  = Paths.get("data", "products.csv");                     // relative
-        Path output = Paths.get("data", "transformed_products.csv");         // relative
-
-        // Case C: missing input file -> message and exit (no crash)
-        if (!Files.exists(input)) {
-            System.err.println("ERROR: Input file not found at " + input.toAbsolutePath()
-                    + " (expected relative path data/products.csv). Exiting.");
-            return;
-        }
-
-        // Make sure data/ exists before writing output
         try {
-            Files.createDirectories(output.getParent());
+            List<String[]> rows = extract();
+            List<String[]> transformedRows = transform(rows);
+            load(transformedRows);
+
+            // Print run summary
+            System.out.println("Run Summary:");
+            System.out.println("Rows read: " + (rows.size() - 1)); // exclude header
+            System.out.println("Rows transformed: " + (transformedRows.size() - 1));
+            System.out.println("Rows skipped: 0");
+            System.out.println("Output written to: data/transformed_products.csv");
+
         } catch (IOException e) {
-            System.err.println("ERROR: Could not create output directory: " + output.getParent());
-            return;
-        }
-
-        int rowsRead = 0;
-        int rowsTransformed = 0;
-        int rowsSkipped = 0;
-
-        try (BufferedReader br = Files.newBufferedReader(input, StandardCharsets.UTF_8);
-             BufferedWriter bw = Files.newBufferedWriter(output, StandardCharsets.UTF_8);
-             PrintWriter out = new PrintWriter(bw)) {
-
-            // Always write header
-            out.println("ProductID,Name,Price,Category,PriceRange");
-
-            String line = br.readLine(); // read header from input (do not transform)
-            if (line == null) {
-                // Case B: empty input file (no header even) -> we've already written header only
-                printSummary(rowsRead, rowsTransformed, rowsSkipped, output);
-                return;
-            }
-
-            // Process each data row
-            int lineNum = 1; // header line
-            while ((line = br.readLine()) != null) {
-                lineNum++;
-                if (line.trim().isEmpty()) {
-                    // empty line -> skip
-                    continue;
-                }
-
-                rowsRead++;
-                String[] parts = line.split(",", -1); // no quoted commas per spec
-                if (parts.length != 4) {
-                    System.err.println("WARN: Skipping line " + lineNum + " (expected 4 columns): " + line);
-                    rowsSkipped++;
-                    continue;
-                }
-
-                String idStr      = parts[0].trim();
-                String name       = parts[1].trim();
-                String priceStr   = parts[2].trim();
-                String category   = parts[3].trim();
-
-                try {
-                    int productId = Integer.parseInt(idStr);
-
-                    // (1) uppercase name
-                    String upperName = name.toUpperCase(Locale.ROOT);
-
-                    // parse price as BigDecimal for precise rounding
-                    BigDecimal price = new BigDecimal(priceStr);
-
-                    // (2) discount if Electronics
-                    String originalCategory = category;
-                    BigDecimal finalPrice = price;
-                    if ("Electronics".equals(originalCategory)) {
-                        finalPrice = price.multiply(new BigDecimal("0.90")); // 10% off
-                    }
-
-                    // round HALF_UP to 2 decimals
-                    finalPrice = finalPrice.setScale(2, RoundingMode.HALF_UP);
-
-                    // (3) recategorize if finalPrice > 500 AND original category was Electronics
-                    if ("Electronics".equals(originalCategory) && finalPrice.compareTo(new BigDecimal("500.00")) > 0) {
-                        category = "Premium Electronics";
-                    }
-
-                    // (4) price range from FINAL price
-                    String priceRange = toPriceRange(finalPrice);
-
-                    // output order: ProductID,Name,Price,Category,PriceRange
-                    out.printf("%d,%s,%.2f,%s,%s%n",
-                            productId, upperName, finalPrice.doubleValue(), category, priceRange);
-
-                    rowsTransformed++;
-
-                } catch (NumberFormatException ex) {
-                    System.err.println("WARN: Skipping line " + lineNum + " (bad number): " + line);
-                    rowsSkipped++;
-                } catch (Exception ex) {
-                    System.err.println("WARN: Skipping line " + lineNum + " (" + ex.getMessage() + "): " + line);
-                    rowsSkipped++;
-                }
-            }
-        } catch (IOException e) {
-            System.err.println("ERROR: I/O problem: " + e.getMessage());
-            return;
-        }
-
-        printSummary(rowsRead, rowsTransformed, rowsSkipped, output);
-    }
-
-    private static String toPriceRange(BigDecimal price) {
-        if (price.compareTo(new BigDecimal("10.00")) <= 0) {
-            return "Low";
-        } else if (price.compareTo(new BigDecimal("100.00")) <= 0) {
-            return "Medium";
-        } else if (price.compareTo(new BigDecimal("500.00")) <= 0) {
-            return "High";
-        } else {
-            return "Premium";
+            System.err.println("Error: " + e.getMessage());
         }
     }
 
-    private static void printSummary(int read, int transformed, int skipped, Path outputPath) {
-        System.out.println("Run Summary");
-        System.out.println("-----------");
-        System.out.println("Rows read:        " + read);
-        System.out.println("Rows transformed: " + transformed);
-        System.out.println("Rows skipped:     " + skipped);
-        System.out.println("Output written to: " + outputPath.toAbsolutePath());
+    /**
+     * Extract step of the ETL pipeline.
+     * Reads {@code data/products.csv} into memory.
+     *
+     * @return a list of String arrays representing rows (first row is header)
+     * @throws IOException if the file is missing or cannot be read
+     */
+    private List<String[]> extract() throws IOException {
+        Path inputPath = Paths.get("data/products.csv");
+
+        if (!Files.exists(inputPath)) {
+            throw new IOException("Input file not found: " + inputPath.toString());
+        }
+
+        List<String[]> rows = new ArrayList<>();
+        try (BufferedReader reader = Files.newBufferedReader(inputPath, StandardCharsets.UTF_8)) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                rows.add(line.split(","));
+            }
+        }
+
+        return rows;
+    }
+
+    /**
+     * Transform step of the ETL pipeline.
+     * Applies transformations to each row:
+     * <ol>
+     *   <li>Convert product names to uppercase</li>
+     *   <li>Apply 10% discount to Electronics (round half-up to 2 decimals)</li>
+     *   <li>Reclassify Electronics > $500 as Premium Electronics</li>
+     *   <li>Add a PriceRange column based on final price</li>
+     * </ol>
+     *
+     * @param rows input rows (first row is header, not transformed)
+     * @return transformed rows with an added PriceRange column
+     */
+    private List<String[]> transform(List<String[]> rows) {
+        List<String[]> transformed = new ArrayList<>();
+
+        // Add header with new PriceRange column
+        String[] header = {"ProductID", "Name", "Price", "Category", "PriceRange"};
+        transformed.add(header);
+
+        // Process rows (skip header at index 0)
+        for (int i = 1; i < rows.size(); i++) {
+            String[] row = rows.get(i);
+            String productId = row[0];
+            String name = row[1].toUpperCase(Locale.ROOT);
+            double price = Double.parseDouble(row[2]);
+            String category = row[3];
+
+            // Apply 10% discount for Electronics
+            if (category.equalsIgnoreCase("Electronics")) {
+                price = price * 0.9;
+                price = new BigDecimal(price).setScale(2, RoundingMode.HALF_UP).doubleValue();
+            }
+
+            // Reclassify as Premium Electronics if final price > 500
+            if (price > 500.0 && category.equalsIgnoreCase("Electronics")) {
+                category = "Premium Electronics";
+            }
+
+            // Determine PriceRange
+            String priceRange;
+            if (price <= 10.0) {
+                priceRange = "Low";
+            } else if (price <= 100.0) {
+                priceRange = "Medium";
+            } else if (price <= 500.0) {
+                priceRange = "High";
+            } else {
+                priceRange = "Premium";
+            }
+
+            transformed.add(new String[]{
+                productId,
+                name,
+                String.valueOf(price),
+                category,
+                priceRange
+            });
+        }
+
+        return transformed;
+    }
+
+    /**
+     * Load step of the ETL pipeline.
+     * Writes transformed data into {@code data/transformed_products.csv}.
+     *
+     * @param rows transformed rows to write (includes header row)
+     * @throws IOException if the file cannot be written
+     */
+    private void load(List<String[]> rows) throws IOException {
+        Path outputPath = Paths.get("data/transformed_products.csv");
+
+        try (BufferedWriter writer = Files.newBufferedWriter(outputPath, StandardCharsets.UTF_8);
+             PrintWriter printWriter = new PrintWriter(writer)) {
+
+            for (String[] row : rows) {
+                printWriter.println(String.join(",", row));
+            }
+        }
     }
 }
