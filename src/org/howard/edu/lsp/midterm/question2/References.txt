@@ -1,0 +1,5 @@
+1) ChatGPT (OpenAI, GPT-5) – concept clarification, structure, and code review guidance.
+2) Oracle Java Docs – Math, IllegalArgumentException.
+3) LSP course slides/labs (Fall 2025).
+
+(Per exam policy, this documents references and AI use.)
