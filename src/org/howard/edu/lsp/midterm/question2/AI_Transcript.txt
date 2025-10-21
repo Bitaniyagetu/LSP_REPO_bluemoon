@@ -1,0 +1,83 @@
+User: Hi, can you help me with Question 2 from my LSP midterm? It says to create an AreaCalculator class with overloaded methods for circle, rectangle, triangle, and square.
+
+AI: Sure! In Java you can use method overloading by giving the same method name but different parameter lists. Each method should validate inputs and throw an IllegalArgumentException if the dimension is ≤ 0. Here’s a clean version:
+
+package org.howard.edu.lsp.midterm.question2;
+
+public class AreaCalculator {
+
+    // Circle
+    public static double area(double radius) {
+        validatePositive(radius, "radius");
+        return Math.PI * radius * radius;
+    }
+
+    // Rectangle
+    public static double area(double width, double height) {
+        validatePositive(width, "width");
+        validatePositive(height, "height");
+        return width * height;
+    }
+
+    // Triangle
+    public static double area(int base, int height) {
+        validatePositive(base, "base");
+        validatePositive(height, "height");
+        return 0.5 * base * height;
+    }
+
+    // Square
+    public static double area(int side) {
+        validatePositive(side, "side");
+        return (double) side * side;
+    }
+
+    private static void validatePositive(double value, String name) {
+        if (value <= 0) throw new IllegalArgumentException(name + " must be > 0");
+    }
+
+    private static void validatePositive(int value, String name) {
+        if (value <= 0) throw new IllegalArgumentException(name + " must be > 0");
+    }
+}
+
+User: Nice! And how should my Main look?
+
+AI: Like this:
+
+package org.howard.edu.lsp.midterm.question2;
+
+public class Main {
+    public static void main(String[] args) {
+        System.out.println("Circle radius 3.0 → area = " + AreaCalculator.area(3.0));
+        System.out.println("Rectangle 5.0 x 2.0 → area = " + AreaCalculator.area(5.0, 2.0));
+        System.out.println("Triangle base 10, height 6 → area = " + AreaCalculator.area(10, 6));
+        System.out.println("Square side 4 → area = " + AreaCalculator.area(4));
+
+        try {
+            AreaCalculator.area(-1.0);
+        } catch (IllegalArgumentException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    /*
+      Comment:
+      Using method overloading keeps one simple name (area)
+      while allowing the compiler to choose the correct version.
+      It groups related calculations and avoids redundant names.
+    */
+}
+
+User: Do I need to make a package in Eclipse?
+
+AI: Yes, right-click src → New → Package → name it org.howard.edu.lsp.midterm.question2, then add both files there.
+
+User: I ran it and got:
+Circle radius 3.0 → area = 28.274333882308138  
+Rectangle 5.0 x 2.0 → area = 10.0  
+Triangle base 10, height 6 → area = 30.0  
+Square side 4 → area = 16.0  
+Error: radius must be > 0
+
+AI: Perfect! That matches the professor’s expected output exactly. Commit it and push to your repo.
