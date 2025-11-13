@@ -81,3 +81,4 @@ Square side 4 → area = 16.0
 Error: radius must be > 0
 
 AI: Perfect! That matches the professor’s expected output exactly. Commit it and push to your repo.
+d
