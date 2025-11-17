@@ -1,113 +1,186 @@
 package org.howard.edu.lsp.assignment6;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
- * A class representing a mathematical set of integers.
- * No duplicates and supports standard set operations.
+ * IntegerSet models a mathematical set of unique integers.
+ * It supports standard set operations such as union, intersection,
+ * difference, complement, and basic queries.
  */
-public class IntegerSet  {
-    private List<Integer> set = new ArrayList<Integer>();
+public class IntegerSet {
 
-    /** Clears the internal representation of the set. */
+    /** Internal list storing unique integers. */
+    private List<Integer> set = new ArrayList<>();
+
+    /**
+     * Clears all elements from the set.
+     */
     public void clear() {
         set.clear();
     }
 
-    /** Returns the number of elements in the set. */
+    /**
+     * Returns the number of elements in the set.
+     *
+     * @return the size of the set.
+     */
     public int length() {
         return set.size();
     }
 
     /**
-     * Returns true if this set is equal to another object.
-     * Two sets are equal if they contain the same elements in ANY order.
+     * Compares this set with another object for equality.
+     * Two sets are equal if they contain the same elements, regardless of order.
+     *
+     * @param o the object to compare with.
+     * @return true if both sets contain the same values, false otherwise.
      */
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof IntegerSet)) return false;
+        if (!(o instanceof IntegerSet)) {
+            return false;
+        }
 
         IntegerSet other = (IntegerSet) o;
 
-        if (this.length() != other.length()) return false;
-
-        List<Integer> copy1 = new ArrayList<>(this.set);
-        List<Integer> copy2 = new ArrayList<>(other.set);
-
-        Collections.sort(copy1);
-        Collections.sort(copy2);
-
-        return copy1.equals(copy2);
+        return this.set.containsAll(other.set) &&
+               other.set.containsAll(this.set);
     }
 
-    /** Returns true if the set contains the value. */
+    /**
+     * Checks whether the set contains the given value.
+     *
+     * @param value integer to search for.
+     * @return true if found, false otherwise.
+     */
     public boolean contains(int value) {
         return set.contains(value);
     }
 
-    /** Returns the largest item in the set. Throws exception if empty. */
+    /**
+     * Returns the largest element in the set.
+     *
+     * @return the largest integer.
+     * @throws IllegalStateException if the set is empty.
+     */
     public int largest() {
         if (set.isEmpty()) {
-            throw new IllegalStateException("Set is empty.");
+            throw new IllegalStateException("Cannot find largest element in an empty set.");
         }
-        return Collections.max(set);
+
+        int max = set.get(0);
+        for (int num : set) {
+            if (num > max) {
+                max = num;
+            }
+        }
+        return max;
     }
 
-    /** Returns the smallest item in the set. Throws exception if empty. */
+    /**
+     * Returns the smallest element in the set.
+     *
+     * @return the smallest integer.
+     * @throws IllegalStateException if the set is empty.
+     */
     public int smallest() {
         if (set.isEmpty()) {
-            throw new IllegalStateException("Set is empty.");
+            throw new IllegalStateException("Cannot find smallest element in an empty set.");
         }
-        return Collections.min(set);
+
+        int min = set.get(0);
+        for (int num : set) {
+            if (num < min) {
+                min = num;
+            }
+        }
+        return min;
     }
 
-    /** Adds a unique item to the set. */
+    /**
+     * Adds a value to the set if it is not already present.
+     *
+     * @param item the value to add.
+     */
     public void add(int item) {
         if (!set.contains(item)) {
             set.add(item);
         }
     }
 
-    /** Removes an item from the set if present. */
+    /**
+     * Removes a value from the set if present.
+     *
+     * @param item the value to remove.
+     */
     public void remove(int item) {
         set.remove(Integer.valueOf(item));
     }
 
-    /** Set union: this = this ∪ other */
+    /**
+     * Performs the union operation: this = this ∪ other.
+     *
+     * @param other another IntegerSet to union with.
+     */
     public void union(IntegerSet other) {
-        for (int value : other.set) {
-            if (!this.set.contains(value)) {
-                this.set.add(value);
+        for (int num : other.set) {
+            if (!this.set.contains(num)) {
+                this.set.add(num);
             }
         }
     }
 
-    /** Set intersection: this = this ∩ other */
+    /**
+     * Performs intersection: this = this ∩ other.
+     *
+     * @param other another IntegerSet.
+     */
     public void intersect(IntegerSet other) {
-        this.set.retainAll(other.set);
+        set.retainAll(other.set);
     }
 
-    /** Set difference: this = this \ other */
+    /**
+     * Performs set difference: this = this \ other.
+     *
+     * @param other another IntegerSet.
+     */
     public void diff(IntegerSet other) {
-        this.set.removeAll(other.set);
+        set.removeAll(other.set);
     }
 
-    /** Set complement: this = other \ this */
+    /**
+     * Performs complement: this = other \ this.
+     *
+     * @param other another IntegerSet.
+     */
     public void complement(IntegerSet other) {
-        List<Integer> result = new ArrayList<>(other.set);
-        result.removeAll(this.set);
-        this.set = result;
+        List<Integer> newSet = new ArrayList<>();
+
+        for (int num : other.set) {
+            if (!this.set.contains(num)) {
+                newSet.add(num);
+            }
+        }
+
+        this.set = newSet;
     }
 
-    /** Returns true if the set is empty. */
+    /**
+     * Checks whether the set is empty.
+     *
+     * @return true if the set contains no elements.
+     */
     public boolean isEmpty() {
         return set.isEmpty();
     }
 
-    /** Returns formatted string representation of the set. */
+    /**
+     * Returns a string representation of the set.
+     * Elements appear inside brackets, comma-separated.
+     *
+     * @return formatted string of the set.
+     */
     @Override
     public String toString() {
         return set.toString();
